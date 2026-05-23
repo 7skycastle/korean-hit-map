@@ -1,0 +1,10 @@
+{
+  "name": "korean-hit-map-deploy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^9.1.0",
+    "@netlify/functions": "^3.0.4"
+  }
+}

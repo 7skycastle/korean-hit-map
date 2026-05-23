@@ -1,0 +1,21 @@
+{
+  "name": "korean-hit-map",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace server\" \"npm run dev --workspace client\"",
+    "build": "npm run build --workspace server && npm run build --workspace client",
+    "install:all": "npm install && npm install --workspace server && npm install --workspace client"
+  },
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "dependencies": {
+    "@netlify/blobs": "^9.1.0",
+    "@netlify/functions": "^3.0.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

@@ -24,6 +24,8 @@ export interface ContentFile {
   fileName: string;
   originalPdfPath: string;
   imagePaths: string[];
+  markdownPath?: string;
+  markdownContent?: string;
   createdAt: string;
 }
 
@@ -34,6 +36,8 @@ export interface ExamFile {
   fileName: string;
   originalPdfPath: string;
   imagePaths: string[];
+  markdownPath?: string;
+  markdownContent?: string;
   createdAt: string;
 }
 
@@ -47,6 +51,9 @@ export interface MatchCase {
   companyLabel: string;
   examImageUrl: string;
   companyImageUrl: string;
+  examMarkdownExcerpt?: string;
+  companyMarkdownExcerpt?: string;
+  markdownComparison?: string;
   examQuestionNo?: string;
   companyQuestionNo?: string;
   grade: Grade;

@@ -32,6 +32,17 @@ function wrapText(text: string, maxChars = 42): string[] {
   return lines.slice(0, 34);
 }
 
+function normalizeMarkdown(text: string, title: string): string {
+  const normalized = text
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n\n");
+
+  return [`# ${title}`, "", normalized || "PDF에서 추출 가능한 텍스트가 없습니다."].join("\n");
+}
+
 function escapeXml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -45,6 +56,22 @@ async function extractPdfText(pdfPath: string): Promise<string> {
   const buffer = await fs.readFile(pdfPath);
   const parsed = await pdfParse(buffer);
   return parsed.text || "";
+}
+
+export async function convertPdfToMarkdown(pdfPath: string, targetType: TargetType, title: string): Promise<{ markdownPath: string; markdownContent: string }> {
+  let text = "";
+  try {
+    text = await extractPdfText(pdfPath);
+  } catch {
+    text = "";
+  }
+
+  const markdownContent = normalizeMarkdown(text, title);
+  const markdownDir = path.join(rootDir, "generated", "markdown", targetType);
+  await fs.mkdir(markdownDir, { recursive: true });
+  const markdownPath = path.join(markdownDir, `${Date.now()}-${safeName(title)}.md`);
+  await fs.writeFile(markdownPath, markdownContent, "utf-8");
+  return { markdownPath, markdownContent };
 }
 
 function buildPreviewSvg(targetType: TargetType, title: string, page: number, bodyText: string): string {

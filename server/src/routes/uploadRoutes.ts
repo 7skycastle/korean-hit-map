@@ -20,14 +20,16 @@ router.post("/company/upload", upload.array("files"), async (req, res, next) => 
     for (const file of files) {
       const originalPdfPath = await saveUploadedPdf(file, "company");
       const imagePaths = await renderPdfToImages(originalPdfPath, "company");
+      const cleanTitle = file.originalname.replace(/\.pdf$/i, "");
+      const description = String(req.body.description || "").trim().slice(0, 10);
       const item: ContentFile = {
         id: `company-${Date.now()}-${created.length}`,
-        title: String(req.body.title || file.originalname.replace(/\.pdf$/i, "")),
-        type: req.body.type || "etc",
-        area: req.body.area || "etc",
-        round: req.body.round || "",
-        publishMonth: req.body.publishMonth || "",
-        description: req.body.description || "",
+        title: cleanTitle,
+        type: "etc",
+        area: "etc",
+        round: "",
+        publishMonth: "",
+        description,
         fileName: file.originalname,
         originalPdfPath,
         imagePaths,

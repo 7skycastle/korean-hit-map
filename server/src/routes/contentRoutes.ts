@@ -14,6 +14,21 @@ router.get("/company", async (_req, res, next) => {
   }
 });
 
+router.delete("/company/:contentId", async (req, res, next) => {
+  try {
+    const existing = await readJson<ContentFile[]>("companyContents.json", []);
+    const nextItems = existing.filter((item) => item.id !== req.params.contentId);
+    if (nextItems.length === existing.length) {
+      res.status(404).json({ message: "콘텐츠를 찾을 수 없습니다." });
+      return;
+    }
+    await writeJson("companyContents.json", nextItems);
+    res.json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/exams", async (_req, res, next) => {
   try {
     res.json(await readJson<ExamFile[]>("examContents.json", []));

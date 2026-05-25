@@ -5,7 +5,7 @@ export default function UploadBox({ multiple, onFiles }: { multiple?: boolean; o
   const [names, setNames] = useState<string[]>([]);
 
   const acceptFiles = (files: FileList | null) => {
-    const selected = Array.from(files ?? []);
+    const selected = Array.from(files ?? []).filter((file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
     setNames(selected.map((file) => file.name));
     onFiles(selected);
   };
@@ -21,12 +21,12 @@ export default function UploadBox({ multiple, onFiles }: { multiple?: boolean; o
     >
       <UploadCloud className="mb-3 text-slate-500" size={34} />
       <span className="text-sm font-bold text-ink">PDF 파일을 드래그하거나 클릭해 업로드</span>
-      <span className="mt-1 text-xs text-slate-500">업로드 진행률은 프로토타입에서 mock 처리됩니다.</span>
+      <span className="mt-1 text-xs text-slate-500">여러 PDF를 한 번에 등록할 수 있습니다.</span>
       <input className="hidden" type="file" accept="application/pdf" multiple={multiple} onChange={(event) => acceptFiles(event.target.files)} />
       {names.length > 0 ? (
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2">
           {names.map((name) => (
-            <span key={name} className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+            <span key={name} className="max-w-full break-words rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
               {name}
             </span>
           ))}

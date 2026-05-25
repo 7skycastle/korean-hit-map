@@ -1,14 +1,13 @@
 import type { ContentFile, ExamFile, Grade, MatchCase, Report } from "../types";
 
-const grades: Grade[] = ["S", "A", "B", "C", "D", "E"];
 const scores: Record<Grade, number> = { S: 100, A: 85, B: 70, C: 55, D: 40, E: 20 };
 const rules = [
-  { title: "동일 작품·제재 직접 연계", grade: "S" as Grade, hitType: "실전 체감 적중", similarity: 94 },
-  { title: "핵심 개념 선학습 연계", grade: "A" as Grade, hitType: "시간 단축 적중", similarity: 86 },
-  { title: "논점·구조 확장 연계", grade: "B" as Grade, hitType: "확장 연계 적중", similarity: 78 },
-  { title: "보기 적용형 문항 구조 연계", grade: "C" as Grade, hitType: "문항 구조 적중", similarity: 71 },
-  { title: "선지 판단 기준·함정 연계", grade: "D" as Grade, hitType: "선지 판단 적중", similarity: 66 },
-  { title: "소재권·배경지식 유사", grade: "E" as Grade, hitType: "소재권 유사", similarity: 49 }
+  { title: "문학 작품 직접 적중", grade: "S" as Grade, hitType: "실전 체감 적중", similarity: 94 },
+  { title: "독서 배경지식 시간 단축 적중", grade: "A" as Grade, hitType: "시간 단축 적중", similarity: 86 },
+  { title: "독서 제재 확장 연계", grade: "B" as Grade, hitType: "확장 연계 적중", similarity: 78 },
+  { title: "보기 적용형 문항 구조 적중", grade: "C" as Grade, hitType: "문항 구조 적중", similarity: 71 },
+  { title: "선지 함정 판단 기준 적중", grade: "D" as Grade, hitType: "선지 판단 적중", similarity: 66 },
+  { title: "동일 소재권 유사", grade: "E" as Grade, hitType: "소재권 유사", similarity: 49 }
 ];
 
 function markdownFor(title: string, description = "") {
@@ -34,6 +33,28 @@ function emptyImagePaths() {
   return ["", "", ""];
 }
 
+function tokenize(text = ""): string[] {
+  return (text.match(/[가-힣A-Za-z0-9]{2,}/g) || []).map((token) => token.toLowerCase());
+}
+
+function sharedKeywords(a = "", b = "", max = 6): string[] {
+  const aSet = new Set(tokenize(a));
+  const bSet = new Set(tokenize(b));
+  return [...aSet].filter((token) => bSet.has(token)).slice(0, max);
+}
+
+function findEvidence(markdown = "", keywords: string[]): string {
+  const sentences = markdown
+    .replace(/\n/g, " ")
+    .split(/[.!?]|다\./)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  for (const sentence of sentences) {
+    if (keywords.some((keyword) => sentence.includes(keyword))) return sentence;
+  }
+  return sentences[0] || "근거 문장을 찾지 못했습니다.";
+}
+
 function buildReport(exam: ExamFile, companyItems: ContentFile[]): Report {
   const candidates = companyItems.length
     ? companyItems
@@ -54,6 +75,14 @@ function buildReport(exam: ExamFile, companyItems: ContentFile[]): Report {
   const cases: MatchCase[] = rules.map((rule, index) => {
     const content = candidates[index % candidates.length];
     const grade = rule.grade;
+    const examQuestionNo = `${18 + index}번`;
+    const companyQuestionNo = `${index + 1}번 후보`;
+    const keywords = sharedKeywords(exam.markdownContent || "", content.markdownContent || "");
+    const keywordText = keywords.length ? keywords.join(", ") : "공통 핵심어 부족";
+    const examEvidence = findEvidence(exam.markdownContent || "", keywords);
+    const companyEvidence = findEvidence(content.markdownContent || "", keywords);
+    const similarityReason = `${rule.title} 기준으로 평가원 ${examQuestionNo}와 회사 콘텐츠 ${companyQuestionNo}를 비교했습니다. 공통 키워드(${keywordText})와 근거 문장을 함께 제시합니다.`;
+
     return {
       id: `static-match-${Date.now()}-${index + 1}`,
       caseNo: index + 1,
@@ -66,22 +95,29 @@ function buildReport(exam: ExamFile, companyItems: ContentFile[]): Report {
       companyImageUrl: "",
       examMarkdownExcerpt: excerpt(exam.markdownContent),
       companyMarkdownExcerpt: excerpt(content.markdownContent),
-      markdownComparison: `평가원 Markdown과 ${content.title} Markdown을 ${rule.hitType} 기준으로 비교했습니다. 작품·제재·핵심 개념·문항 구조·선지 판단 기준의 연결 가능성을 요약합니다.`,
-      examQuestionNo: `${18 + index}번`,
-      companyQuestionNo: `${index + 1}번 후보`,
+      markdownComparison: `${similarityReason}\n평가원 근거: ${examEvidence}\n회사 콘텐츠 근거: ${companyEvidence}`,
+      examQuestionNo,
+      companyQuestionNo,
       grade,
       score: scores[grade],
       similarity: rule.similarity,
       hitType: rule.hitType,
       hitTypeDescription: rule.title,
-      aiSummary: `평가원 Markdown과 ${content.title} Markdown을 기준으로 규칙 기반 mock 분석을 수행했습니다.`,
+      aiSummary: similarityReason,
+      questionPairSummary: `평가원 ${examQuestionNo} ↔ 회사 ${companyQuestionNo}`,
+      similarityReason,
+      sharedKeywords: keywords,
+      examEvidence,
+      companyEvidence,
       evidencePoints: [
-        "PDF를 Markdown으로 변환한 텍스트를 기준으로 비교했습니다.",
-        "업로드한 회사 콘텐츠가 분석 후보에 직접 반영되었습니다.",
-        "향후 OCR, 임베딩 검색, LLM 요약으로 분석 품질을 확장할 수 있습니다."
+        `비교 문항: 평가원 ${examQuestionNo} / 회사 ${companyQuestionNo}`,
+        `공통 키워드: ${keywordText}`,
+        `평가원 근거 문장: ${examEvidence}`,
+        `회사 근거 문장: ${companyEvidence}`
       ],
-      studentBenefit: "학생이 사전에 학습한 콘텐츠가 평가원 지문 이해, 보기 적용, 선지 판단에 줄 수 있는 도움을 검토할 수 있습니다.",
-      caution: "이 분석은 동일 문항 출제를 의미하지 않으며, Markdown 변환 텍스트에서 체감 가능한 연계 요소를 요약한 것입니다.",
+      studentBenefit: "학생은 사전 학습한 구조를 이용해 지문 이해와 선지 판단 속도를 높일 수 있습니다.",
+      caution:
+        "본 분석은 동일 문항 출제를 의미하지 않습니다. 학생이 시험장에서 체감할 수 있는 연계 요소와 학습 효과를 분석한 자료입니다.",
       examHighlights: [],
       companyHighlights: [],
       approved: index < 5

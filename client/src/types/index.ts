@@ -60,6 +60,11 @@ export interface MatchCase {
   hitType: string;
   hitTypeDescription: string;
   aiSummary: string;
+  questionPairSummary?: string;
+  similarityReason?: string;
+  sharedKeywords?: string[];
+  examEvidence?: string;
+  companyEvidence?: string;
   evidencePoints: string[];
   studentBenefit: string;
   caution: string;

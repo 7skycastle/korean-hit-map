@@ -8,7 +8,40 @@ function MarkdownPanel({ label, title, body }: { label: string; title: string; b
         <span className="rounded bg-slate-100 px-2 py-1 text-xs font-black text-slate-700">{label}</span>
         <span className="min-w-0 break-words text-right text-xs font-bold text-slate-500">{title}</span>
       </div>
-      <pre className="max-h-[420px] whitespace-pre-wrap break-words p-4 text-sm leading-6 text-slate-700">{body || "Markdown 변환 텍스트가 없습니다."}</pre>
+      <pre className="max-h-[420px] whitespace-pre-wrap break-words p-4 text-sm leading-6 text-slate-700">
+        {body || "Markdown 변환 텍스트가 없습니다."}
+      </pre>
+    </div>
+  );
+}
+
+function SimilarityTable({ item }: { item: MatchCase }) {
+  const keywordText = item.sharedKeywords?.length ? item.sharedKeywords.join(", ") : "공통 핵심어 부족";
+
+  return (
+    <div className="mt-5 overflow-hidden rounded-md border border-slate-200">
+      <div className="grid grid-cols-1 divide-y divide-slate-200 text-sm md:grid-cols-4 md:divide-x md:divide-y-0">
+        <div className="bg-slate-50 p-3 font-black text-slate-700">평가원 문항</div>
+        <div className="p-3 text-slate-700">{item.examQuestionNo || "-"}</div>
+        <div className="bg-slate-50 p-3 font-black text-slate-700">회사 유사 문항</div>
+        <div className="p-3 text-slate-700">{item.companyQuestionNo || "-"}</div>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-slate-200 text-sm md:grid-cols-4 md:divide-x md:divide-y-0">
+        <div className="bg-slate-50 p-3 font-black text-slate-700">공통 키워드</div>
+        <div className="p-3 text-slate-700 md:col-span-3">{keywordText}</div>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-slate-200 text-sm md:grid-cols-4 md:divide-x md:divide-y-0">
+        <div className="bg-slate-50 p-3 font-black text-slate-700">유사 판단 근거</div>
+        <div className="p-3 text-slate-700 md:col-span-3">{item.similarityReason || item.aiSummary}</div>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-slate-200 text-sm md:grid-cols-4 md:divide-x md:divide-y-0">
+        <div className="bg-slate-50 p-3 font-black text-slate-700">평가원 근거 문장</div>
+        <div className="p-3 text-slate-700 md:col-span-3">{item.examEvidence || "-"}</div>
+      </div>
+      <div className="grid grid-cols-1 divide-y divide-slate-200 text-sm md:grid-cols-4 md:divide-x md:divide-y-0">
+        <div className="bg-slate-50 p-3 font-black text-slate-700">회사 근거 문장</div>
+        <div className="p-3 text-slate-700 md:col-span-3">{item.companyEvidence || "-"}</div>
+      </div>
     </div>
   );
 }
@@ -27,14 +60,15 @@ export default function EvidenceCompareCard({ item }: { item: MatchCase }) {
         <ScoreBadge grade={item.grade} score={item.score} />
       </div>
 
-      <div className="mt-5 rounded-md border border-blue-100 bg-blue-50 p-4">
-        <h4 className="text-sm font-black text-blue-900">Markdown 규칙 비교 요약</h4>
-        <p className="mt-2 text-sm leading-6 text-blue-900">{item.markdownComparison || item.aiSummary}</p>
-      </div>
+      <SimilarityTable item={item} />
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
         <MarkdownPanel label="평가원 Markdown" title={`${item.examLabel} · ${item.examQuestionNo ?? ""}`} body={item.examMarkdownExcerpt} />
-        <MarkdownPanel label="회사 콘텐츠 Markdown" title={`${item.companyLabel} · ${item.companyQuestionNo ?? ""}`} body={item.companyMarkdownExcerpt} />
+        <MarkdownPanel
+          label="회사 콘텐츠 Markdown"
+          title={`${item.companyLabel} · ${item.companyQuestionNo ?? ""}`}
+          body={item.companyMarkdownExcerpt}
+        />
       </div>
 
       <div className="mt-5 grid gap-4 border-t border-slate-200 pt-4 md:grid-cols-3">

@@ -2,8 +2,10 @@ import { build } from "esbuild";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = process.cwd();
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(scriptDir, "..");
 const dist = path.join(root, "dist");
 const assets = path.join(dist, "assets");
 const buildId = Date.now().toString(36);
@@ -30,9 +32,9 @@ if (tailwind.status !== 0) {
 
 console.log("Bundling React app...");
 await build({
-  entryPoints: ["src/main.tsx"],
+  entryPoints: [path.join(root, "src", "main.tsx")],
   bundle: true,
-  outfile: `dist/assets/${jsName}`,
+  outfile: path.join(root, "dist", "assets", jsName),
   format: "esm",
   platform: "browser",
   target: ["es2020"],
